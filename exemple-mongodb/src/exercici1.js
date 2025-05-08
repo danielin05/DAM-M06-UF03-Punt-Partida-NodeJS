@@ -19,7 +19,7 @@ const logger = winston.createLogger({
         winston.format.simple()
       )
     }),
-    new winston.transports.File({ filename: '../data/logs/exercici1.log' })
+    new winston.transports.File({ filename: '../../data/logs/exercici1.log' })
   ]
 });
 
@@ -53,27 +53,28 @@ function processAnimeData(data) {
   const posts = Array.isArray(data.posts.row) ? data.posts.row : [data.posts.row];
   
   return posts.map(post => {
-    if (parseInt(post.ViewCount) > 20000) {
+    const viewCount = parseInt(post.ViewCount);
+    if (viewCount > 20000) {
       // Decodificar entitats HTML en el cos i les etiquetes
-      const decodedBody = he.decode(post.Body);
-      const decodedTags = he.decode(post.Tags);
-  
-      // Retornar el document processat
+      const decodedBody = he.decode(post.Body || '');
+      const decodedTags = he.decode(post.Tags || '');
+
+      // Retornar el document processat amb camps numèrics
       return {
         question: {
-          Id: post.Id,
-          PostTypeId: post.PostTypeId,
-          AcceptedAnswerId: post.AcceptedAnswerId,
+          Id: parseInt(post.Id),
+          PostTypeId: parseInt(post.PostTypeId),
+          AcceptedAnswerId: post.AcceptedAnswerId ? parseInt(post.AcceptedAnswerId) : null,
           CreationDate: post.CreationDate,
-          Score: post.Score,
-          ViewCount: post.ViewCount,
-          Body: decodedBody, // Aquí hem decodificat el cos
-          OwnerUserId: post.OwnerUserId,
+          Score: parseInt(post.Score),
+          ViewCount: viewCount,
+          Body: decodedBody,
+          OwnerUserId: post.OwnerUserId ? parseInt(post.OwnerUserId) : null,
           LastActivityDate: post.LastActivityDate,
           Title: post.Title,
-          Tags: decodedTags, // També decodifiquem les etiquetes
-          AnswerCount: post.AnswerCount,
-          CommentCount: post.CommentCount,
+          Tags: decodedTags,
+          AnswerCount: post.AnswerCount ? parseInt(post.AnswerCount) : null,
+          CommentCount: post.CommentCount ? parseInt(post.CommentCount) : null,
           ContentLicense: post.ContentLicense
         }
       };
@@ -84,7 +85,7 @@ function processAnimeData(data) {
 
 // Funció principal per carregar les dades a MongoDB
 async function loadDataToMongoDB() {
-  const uri = process.env.MONGODB_URI || 'mongodb://root:password@localhost:27017/';
+  const uri = process.env.MONGODB_URI || 'mongodb://root:password@127.0.0.1:27017/';
   const client = new MongoClient(uri);
   
   try {
